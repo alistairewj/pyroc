@@ -43,7 +43,7 @@ def auroc(target, pred):
         # Only get positive targets
         pos = negativeCS[~negative[:, p]]
 
-        W[n] = np.sum(pos)
+        W[p] = np.sum(pos)
 
     count = np.sum(negative, axis=0)  # count number who are negative
     count = count * (N - count)  # multiply by positives
@@ -109,7 +109,7 @@ def auroc_ci(target, pred, alpha=0.05):
             phi1 = X[:, r] > Y[j, r]
             # ties (X==Y) get half points
             phi2 = X[:, r] == Y[j, r]
-            V01[j, r] = (sum(phi1)+sum(phi2)*0.5)/m
+            V01[j, r] = (np.sum(phi1)+np.sum(phi2)*0.5)/m
 
     #  Calculate S01 and S10, covariance matrices of V01 and V10
     S01 = ((np.transpose(V01)*V01)-n*(np.transpose(auc) * auc))/(n-1)
