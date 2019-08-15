@@ -72,12 +72,12 @@ class ROC(object):
             self.Y[:, i] = self.preds[p][idx]
 
         # calculate auc, V10, V01
-        self.__calculate_auc()
+        self._calculate_auc()
 
         # calculate S01, S10, S
-        self.__calculate_covariance()
+        self._calculate_covariance()
 
-    def __calculate_auc(self):
+    def _calculate_auc(self):
         m = self.X.shape[0]
         n = self.Y.shape[0]
 
@@ -109,14 +109,14 @@ class ROC(object):
 
         return self.auc
 
-    def __calculate_covariance(self):
+    def _calculate_covariance(self):
         # Calculates the covariance for R sets of predictions and outcomes
 
         m = self.V10.shape[0]
         n = self.V01.shape[0]
 
         if self.auc is None:
-            self.__calculate_auc()
+            self._calculate_auc()
 
         V01, V10, theta = self.V01, self.V10, self.auc
 
@@ -137,7 +137,7 @@ class ROC(object):
     def ci(self, alpha=0.05):
         # Calculates the confidence intervals for each auroc separetely
         if self.auc is None:
-            self.__calculate_auc()
+            self._calculate_auc()
 
         # Calculate CIs
         itvs = np.transpose([[alpha/2, 1-(alpha/2)]])
@@ -158,7 +158,7 @@ class ROC(object):
 
         # Verify if covariance was calculated
         if self.S is None:
-            self.__calculate_covariance()
+            self._calculate_covariance()
 
         # L as matrix
         L = np.array(contrast, dtype=float)
@@ -241,7 +241,7 @@ class ROC(object):
 
         return (fig, ax)
 
-    def __roc(self, pred):
+    def _roc(self, pred):
         # Transform to matrices
         y_prob = np.array([pred])
         target = np.array([self.target])
@@ -266,7 +266,7 @@ class ROC(object):
 
         # Calculate auc
         if self.auc is None:
-            self.__calculate_auc()
+            self._calculate_auc()
 
         # Get colormap
         viridis = plt.cm.get_cmap("viridis", len(labels))
@@ -283,7 +283,7 @@ class ROC(object):
             pred = self.preds[i]
 
             # Calculate FPRs and TPRs
-            fpr, tpr = self.__roc(pred)
+            fpr, tpr = self._roc(pred)
             roc = ax.plot(fpr, tpr, lw=12, color=viridis(i))[0]
 
             # Line legend
