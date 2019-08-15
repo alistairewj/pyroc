@@ -212,9 +212,9 @@ class ROC(object):
 
         return thetaP, theta2
 
-    def __figure(self):
+    def __figure(self, figsize=(36, 30), **kwargs):
         # Create figure
-        fig, ax = plt.subplots(figsize=(36, 30))
+        fig, ax = plt.subplots(figsize=figsize, **kwargs)
         fig.tight_layout()
 
         # Stylying
@@ -260,9 +260,9 @@ class ROC(object):
 
         return fpr, tpr
 
-    def curve(self, labels=None):
-        # Create figure
-        fig, ax = self.__figure()
+    def curve(self, labels=None, **kwargs):
+        # Init figure with axes labels, etc.
+        fig, ax = self.__figure(**kwargs)
 
         # Calculate auc
         if self.auc is None:
@@ -276,11 +276,11 @@ class ROC(object):
 
         # Set default labels
         if labels is None:
-            labels = {i: "ROC{0}".format(i) for i in range(self.K)}
+            labels = self.predictors
 
-        for i, label in labels.items():
+        for i, label in enumerate(self.predictors):
             # Get prediction for current iteration
-            pred = self.preds[i]
+            pred = self.preds[label]
 
             # Calculate FPRs and TPRs
             fpr, tpr = self._roc(pred)
