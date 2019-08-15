@@ -27,7 +27,7 @@ class ROC(object):
         if type(preds) is list:
             # convert preds into a dictionary
             self.predictors = [x for x in range(len(preds))]
-            self.preds = OrderedDict([ [i, x] for i, x in enumerate(preds) ])
+            self.preds = OrderedDict([[i, x] for i, x in enumerate(preds)])
         elif 'array' in str(type(preds)):
             # convert preds into a dictionary
             self.predictors = [0]
@@ -36,9 +36,10 @@ class ROC(object):
             # preds is a dict - convert to ordered
             self.predictors = list(preds.keys())
             self.predictors.sort()
-            self.preds = OrderedDict([ [c, preds[c]] for c in self.predictors])
+            self.preds = OrderedDict([[c, preds[c]] for c in self.predictors])
         elif type(preds) is not OrderedDict:
-            raise ValueError('Unrecognized type "%s" for predictions.', str(type(preds)))
+            raise ValueError(
+                'Unrecognized type "%s" for predictions.', str(type(preds)))
         else:
             # is already a ordered dict
             self.preds = preds
@@ -79,7 +80,7 @@ class ROC(object):
     def __calculate_auc(self):
         m = self.X.shape[0]
         n = self.Y.shape[0]
-        
+
         theta = np.zeros([1, self.K])
         V10 = np.zeros([m, self.K])
         V01 = np.zeros([n, self.K])
@@ -92,9 +93,9 @@ class ROC(object):
                 phi2 = np.sum(self.X[i, r] == self.Y[:, r])
                 # Xi = Y
                 V10[i, r] = (phi1+phi2*0.5)/n
-                theta[0, r] = theta[0,r]+phi1+phi2*0.5
+                theta[0, r] = theta[0, r]+phi1+phi2*0.5
 
-            theta[0,r] = theta[0,r]/(n*m)
+            theta[0, r] = theta[0, r]/(n*m)
             for j in range(n):
                 # correct classifications (X>Y)
                 phi1 = np.sum(self.X[:, r] > self.Y[j, r])
@@ -105,12 +106,12 @@ class ROC(object):
         self.auc = theta
         self.V10 = V10
         self.V01 = V01
-        
+
         return self.auc
 
     def __calculate_covariance(self):
         # Calculates the covariance for R sets of predictions and outcomes
-        
+
         m = self.V10.shape[0]
         n = self.V01.shape[0]
 
@@ -122,7 +123,7 @@ class ROC(object):
         # Calculate S01 and S10, covariance matrices of V01 and V10
         self.S01 = ((np.transpose(V01)@V01) -
                     n*(np.transpose(theta)@theta))/(n-1)
-        self.S10 = ((np.transpose(V10)@V10) - 
+        self.S10 = ((np.transpose(V10)@V10) -
                     m*(np.transpose(theta)@theta))/(m-1)
         # Alternative equivalent formulations:
         # self.S01 = (np.transpose(V01-theta)@(V01-theta))/(n-1)
@@ -135,17 +136,13 @@ class ROC(object):
 
     def ci(self, alpha=0.05):
         # Calculates the confidence intervals for each auroc separetely
-        
-        m = self.V10.shape[0]
-        n = self.V01.shape[0]
-
         if self.auc is None:
             self.__calculate_auc()
-        
+
         # Calculate CIs
         itvs = np.transpose([[alpha/2, 1-(alpha/2)]])
         ci = norm.ppf(itvs, self.auc, np.sqrt(np.diagonal(self.S)))
-            
+
         return ci
 
     def compare(self, contrast, alpha=0.05):
@@ -154,7 +151,7 @@ class ROC(object):
         #   contrast = [1, -1]
 
         # Validate alpha
-        if (alpha <= 0) | (alpha >= 1): 
+        if (alpha <= 0) | (alpha >= 1):
             raise ValueError('alpha must be in the range (0, 1), exclusive.')
         elif alpha > 0.5:
             alpha = 1 - alpha
@@ -162,27 +159,30 @@ class ROC(object):
         # Verify if covariance was calculated
         if self.S is None:
             self.__calculate_covariance()
-        
+
         # L as matrix
         L = np.array(contrast, dtype=float)
         if len(L.shape) == 1:
             L = L.reshape(1, L.shape[0])
-            
+
         # Shapes
         L_sz = L.shape
         S_sz = self.S.shape
 
         # is not equal to number of classifiers
-        if (S_sz[1] != L_sz[1]): # Contrast column
-            raise ValueError('Contrast should have %d elements (number of predictors)', S_sz[1])
-        
+        if (S_sz[1] != L_sz[1]):  # Contrast column
+            raise ValueError(
+                'Contrast should have %d elements (number of predictors)',
+                S_sz[1]
+            )
+
         # Validate contrast
         if np.any(np.sum(L, axis=1) != 0):
             raise ValueError('Contrast rows must sum to 0', S_sz[1])
-        
+
         # Calculate LSL matrix
         LSL = L @ self.S @ np.transpose(L)
-        
+
         # Normal vs chi^2 distribution
         if L_sz[0] == 1:
             # Compute using the normal distribution
@@ -195,16 +195,17 @@ class ROC(object):
                 thetaP = 2*(1-thetaP)
             else:
                 thetaP = 2*thetaP
-            
+
             # Confidence intervals
             theta2 = norm.ppf([alpha/2, 1-alpha/2], self.auc[L == 1], sigma)
         else:
             # Calculate chi2 stat with DOF = rank(L*S*L')
             # first invert the LSL matrix
             inv_LSL = np.linalg.inv(LSL)
-            
+
             # then calculate the chi2
-            w_chi2 = np.transpose(self.auc) @ np.transpose(L) @ inv_LSL @ L @ self.auc
+            w_chi2 = np.transpose(self.auc) @ np.transpose(
+                L) @ inv_LSL @ L @ self.auc
             w_df = np.linalg.matrix_rank(LSL)
             thetaP = 1 - chi2.cdf(w_chi2, w_df)
             theta2 = w_chi2
@@ -218,9 +219,9 @@ class ROC(object):
 
         # Stylying
         ax.tick_params(labelsize=60)
-        ax.spines["top"].set_visible(False)    
-        ax.spines["bottom"].set_visible(False)    
-        ax.spines["right"].set_visible(False)    
+        ax.spines["top"].set_visible(False)
+        ax.spines["bottom"].set_visible(False)
+        ax.spines["right"].set_visible(False)
         ax.spines["left"].set_visible(False)
 
         # Plot diagonal line
@@ -244,16 +245,16 @@ class ROC(object):
         # Transform to matrices
         y_prob = np.array([pred])
         target = np.array([self.target])
-        
+
         # Calculate predictions for all thresholds
         thresholds = np.transpose([np.unique(y_prob)])
         y_pred = np.greater_equal(y_prob, thresholds)
-        
+
         # FPR and TPR
-        P = target==1
-        N = target==0
-        FP = np.logical_and(y_pred==1, N)
-        TP = np.logical_and(y_pred==1, P)
+        P = target == 1
+        N = target == 0
+        FP = np.logical_and(y_pred == 1, N)
+        TP = np.logical_and(y_pred == 1, P)
         fpr = np.sum(FP, axis=1)/np.sum(N)
         tpr = np.sum(TP, axis=1)/np.sum(P)
 
@@ -262,34 +263,35 @@ class ROC(object):
     def curve(self, labels=None):
         # Create figure
         fig, ax = self.__figure()
-        
+
         # Calculate auc
         if self.auc is None:
             self.__calculate_auc()
-            
+
         # Get colormap
         viridis = plt.cm.get_cmap("viridis", len(labels))
-            
+
         # Calculate confidence intervals
         ci = self.ci()
-        
+
         # Set default labels
         if labels is None:
             labels = {i: "ROC{0}".format(i) for i in range(self.K)}
-        
+
         for i, label in labels.items():
             # Get prediction for current iteration
             pred = self.preds[i]
-            
+
             # Calculate FPRs and TPRs
             fpr, tpr = self.__roc(pred)
             roc = ax.plot(fpr, tpr, lw=12, color=viridis(i))[0]
 
             # Line legend
-            legend = '{0}, AUC = {1:0.2f} ({2:0.2f}-{3:0.2f})'.format(label, self.auc[0,i], ci[0,i], ci[1,i])
+            legend = '{0}, AUC = {1:0.2f} ({2:0.2f}-{3:0.2f})'.format(
+                label, self.auc[0, i], ci[0, i], ci[1, i])
             roc.set_label(legend)
-            
+
         # Legend stylying
         ax.legend(fontsize=50, loc=4)
-        
+
         return (fig, ax)
