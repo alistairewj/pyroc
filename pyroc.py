@@ -260,7 +260,7 @@ class ROC(object):
 
         return fpr, tpr
 
-    def curve(self, labels=None, **kwargs):
+    def curve(self, labels=None, fontsize=50, **kwargs):
         # Init figure with axes labels, etc.
         fig, ax = self.__figure(**kwargs)
 
@@ -292,6 +292,6 @@ class ROC(object):
             roc.set_label(legend)
 
         # Legend stylying
-        ax.legend(fontsize=50, loc=4)
+        ax.legend(fontsize=fontsize, loc=4)
 
         return (fig, ax)
