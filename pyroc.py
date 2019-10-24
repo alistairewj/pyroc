@@ -197,20 +197,19 @@ class ROC(object):
                 thetaP = 2*thetaP
 
             # Confidence intervals
-            theta2 = norm.ppf([alpha/2, 1-alpha/2], self.auc[L == 1], sigma)
+            theta2 = norm.ppf([alpha/2, 1-alpha/2], mu, sigma)
         else:
             # Calculate chi2 stat with DOF = rank(L*S*L')
             # first invert the LSL matrix
             inv_LSL = np.linalg.inv(LSL)
 
             # then calculate the chi2
-            w_chi2 = np.transpose(self.auc) @ np.transpose(
-                L) @ inv_LSL @ L @ self.auc
-            w_df = np.linalg.matrix_rank(LSL)
+            w_chi2 = self.auc @ np.transpose(L) @ inv_LSL @ L @ np.transpose(self.auc)
+            w_df = np.linalg.matrix_rank(np.transpose(LSL))
             thetaP = 1 - chi2.cdf(w_chi2, w_df)
-            theta2 = w_chi2
+            theta2 = chi2.ppf([alpha/2, 1-alpha/2], w_df)
 
-        return thetaP, theta2
+        return np.ndarray.item(thetaP), theta2
 
     def __figure(self, figsize=(36, 30), **kwargs):
         # Create figure
@@ -267,6 +266,9 @@ class ROC(object):
         # Calculate auc
         if self.auc is None:
             self._calculate_auc()
+            
+        if labels is None:
+            labels = self.predictors
 
         # Get colormap
         viridis = plt.cm.get_cmap("viridis", len(labels))
