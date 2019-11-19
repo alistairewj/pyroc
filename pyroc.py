@@ -47,9 +47,9 @@ class ROC(object):
             *or* an NxD matrix,
             *or* a dictionary of vectors.
         """
-        self.predictors, self.preds = self._parse_input_preds(preds)
-
-        self.target = self._parse_input_target(target)
+        self.predictors, self.preds, self.target = self._parse_inputs(
+            preds, target
+        )
 
         # TODO: validate that target/predictors work
         # self._validate_inputs()
@@ -83,7 +83,7 @@ class ROC(object):
         # calculate S01, S10, S
         self._calculate_covariance()
 
-    def _parse_input_preds(self, preds):
+    def _parse_inputs(self, preds, target):
         """Parse various formats of preds into dictionary/numpy array.
 
         Parameters
@@ -96,11 +96,15 @@ class ROC(object):
 
         Returns
         -------
-        (np.ndarray, OrderedDict)
-            A list of names for each predictor and a dictionary with
-            the values for each predictor. If no predictor names are
-            provided, then predictor names are monotonically increasing
-            integers.
+        (np.ndarray, OrderedDict, np.ndarray)
+            - A list of names for each predictor
+            - An ordered dictionary with the values for each predictor.
+              If no predictor names are provided, then predictor names are
+              monotonically increasing integers.
+            - A list of names for each predictor and a dictionary with
+              the values for each predictor. If no predictor names are
+              provided, then predictor names are monotonically increasing
+              integers.
 
         """
         if type(preds) is list:
@@ -129,26 +133,6 @@ class ROC(object):
             preds = preds
             predictors = list(preds.keys())
 
-        return predictors, preds
-
-    def _parse_input_target(self, target):
-        """Parse various formats of targets into a numpy array.
-
-        Parameters
-        ----------
-        target
-            A numpy array of target values (0 and 1) which correspond
-            to the targets.
-
-        Returns
-        -------
-        np.ndarray
-            A list of names for each predictor and a dictionary with
-            the values for each predictor. If no predictor names are
-            provided, then predictor names are monotonically increasing
-            integers.
-
-        """
         if type(target) is pd.Series:
             target = target.values
         elif type(target) is not np.ndarray:
@@ -156,7 +140,7 @@ class ROC(object):
                 'target should be type np.ndarray, was %s', type(target)
             )
 
-        return target
+        return predictors, preds, target
 
     def _calculate_auc(self):
         """Calculates the area under the ROC and the variances of each predictor.
