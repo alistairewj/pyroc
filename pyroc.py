@@ -22,7 +22,6 @@ class ROC(object):
           *or* a list of these vectors if comparing multiple predictions
           *or* a dictionary of these vectors
     """
-
     def __init__(self, target, preds):
         if type(preds) is list:
             # convert preds into a dictionary
@@ -39,7 +38,8 @@ class ROC(object):
             self.preds = OrderedDict([[c, preds[c]] for c in self.predictors])
         elif type(preds) is not OrderedDict:
             raise ValueError(
-                'Unrecognized type "%s" for predictions.', str(type(preds)))
+                'Unrecognized type "%s" for predictions.', str(type(preds))
+            )
         else:
             # is already a ordered dict
             self.preds = preds
@@ -92,16 +92,16 @@ class ROC(object):
                 # Xi > Y
                 phi2 = np.sum(self.X[i, r] == self.Y[:, r])
                 # Xi = Y
-                V10[i, r] = (phi1+phi2*0.5)/n
-                theta[0, r] = theta[0, r]+phi1+phi2*0.5
+                V10[i, r] = (phi1 + phi2 * 0.5) / n
+                theta[0, r] = theta[0, r] + phi1 + phi2 * 0.5
 
-            theta[0, r] = theta[0, r]/(n*m)
+            theta[0, r] = theta[0, r] / (n * m)
             for j in range(n):
                 # correct classifications (X>Y)
                 phi1 = np.sum(self.X[:, r] > self.Y[j, r])
                 # ties (X==Y) get half points
                 phi2 = np.sum(self.X[:, r] == self.Y[j, r])
-                V01[j, r] = (phi1+phi2*0.5)/m
+                V01[j, r] = (phi1 + phi2 * 0.5) / m
 
         self.auc = theta
         self.V10 = V10
@@ -121,10 +121,12 @@ class ROC(object):
         V01, V10, theta = self.V01, self.V10, self.auc
 
         # Calculate S01 and S10, covariance matrices of V01 and V10
-        self.S01 = ((np.transpose(V01)@V01) -
-                    n*(np.transpose(theta)@theta))/(n-1)
-        self.S10 = ((np.transpose(V10)@V10) -
-                    m*(np.transpose(theta)@theta))/(m-1)
+        self.S01 = (
+            (np.transpose(V01) @ V01) - n * (np.transpose(theta) @ theta)
+        ) / (n - 1)
+        self.S10 = (
+            (np.transpose(V10) @ V10) - m * (np.transpose(theta) @ theta)
+        ) / (m - 1)
         # Alternative equivalent formulations:
         # self.S01 = (np.transpose(V01-theta)@(V01-theta))/(n-1)
         # self.S10 = (np.transpose(V10-theta)@(V10-theta))/(m-1)
@@ -132,7 +134,7 @@ class ROC(object):
         # self.S10 = np.cov(np.transpose(self.V10))
 
         # Combine for S, covariance matrix of AUCs
-        self.S = (1/m)*self.S10 + (1/n)*self.S01
+        self.S = (1 / m) * self.S10 + (1 / n) * self.S01
 
     def ci(self, alpha=0.05):
         # Calculates the confidence intervals for each auroc separetely
@@ -140,7 +142,7 @@ class ROC(object):
             self._calculate_auc()
 
         # Calculate CIs
-        itvs = np.transpose([[alpha/2, 1-(alpha/2)]])
+        itvs = np.transpose([[alpha / 2, 1 - (alpha / 2)]])
         ci = norm.ppf(itvs, self.auc, np.sqrt(np.diagonal(self.S)))
 
         return ci
@@ -192,23 +194,24 @@ class ROC(object):
 
             # 2-sided test, double the tails -> double the p-value
             if mu < 0:
-                thetaP = 2*(1-thetaP)
+                thetaP = 2 * (1 - thetaP)
             else:
-                thetaP = 2*thetaP
+                thetaP = 2 * thetaP
 
             # Confidence intervals
-            theta2 = norm.ppf([alpha/2, 1-alpha/2], mu, sigma)
+            theta2 = norm.ppf([alpha / 2, 1 - alpha / 2], mu, sigma)
         else:
             # Calculate chi2 stat with DOF = rank(L*S*L')
             # first invert the LSL matrix
             inv_LSL = np.linalg.inv(LSL)
 
             # then calculate the chi2
-            w_chi2 = self.auc @ np.transpose(
-                L) @ inv_LSL @ L @ np.transpose(self.auc)
+            w_chi2 = self.auc @ np.transpose(L) @ inv_LSL @ L @ np.transpose(
+                self.auc
+            )
             w_df = np.linalg.matrix_rank(np.transpose(LSL))
             thetaP = 1 - chi2.cdf(w_chi2, w_df)
-            theta2 = chi2.ppf([alpha/2, 1-alpha/2], w_df)
+            theta2 = chi2.ppf([alpha / 2, 1 - alpha / 2], w_df)
 
         return np.ndarray.item(thetaP), theta2
 
@@ -255,8 +258,8 @@ class ROC(object):
         N = target == 0
         FP = np.logical_and(y_pred == 1, N)
         TP = np.logical_and(y_pred == 1, P)
-        fpr = np.sum(FP, axis=1)/np.sum(N)
-        tpr = np.sum(TP, axis=1)/np.sum(P)
+        fpr = np.sum(FP, axis=1) / np.sum(N)
+        tpr = np.sum(TP, axis=1) / np.sum(P)
 
         return fpr, tpr
 
@@ -291,7 +294,8 @@ class ROC(object):
 
             # Line legend
             legend = '{0}, AUC = {1:0.2f} ({2:0.2f}-{3:0.2f})'.format(
-                label, self.auc[0, i], ci[0, i], ci[1, i])
+                label, self.auc[0, i], ci[0, i], ci[1, i]
+            )
             roc.set_label(legend)
 
         # Legend stylying
