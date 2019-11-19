@@ -104,7 +104,10 @@ class ROC(object):
               integers.
 
         """
-        if type(preds) is list:
+        if type(preds) is OrderedDict:
+            # is already a ordered dict
+            pass
+        elif type(preds) is list:
             if len(preds) == len(target):
                 preds = OrderedDict([(0, np.asarray(preds))])
             elif hasattr(preds[0], '__len__'):
@@ -127,13 +130,10 @@ class ROC(object):
             # preds is a dict - convert to ordered
             names = sorted(preds.keys())
             preds = OrderedDict([[c, np.asarray(preds[c])] for c in names])
-        elif type(preds) is not OrderedDict:
+        else:
             raise ValueError(
                 'Unrecognized type "%s" for predictions.', str(type(preds))
             )
-        else:
-            # is already a ordered dict
-            pass
 
         if type(target) is pd.Series:
             target = target.values
