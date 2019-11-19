@@ -365,15 +365,15 @@ class ROC(object):
         if self.auc is None:
             self._calculate_auc()
 
-        # Get colormap
-        viridis = plt.cm.get_cmap("viridis", len(labels))
-
         # Calculate confidence intervals
         ci = self.ci()
 
         # Set default labels
         if labels is None:
             labels = self.preds.keys()
+
+        # Get colormap
+        viridis = plt.cm.get_cmap("viridis", len(labels))
 
         for i, label in enumerate(labels):
             # Get prediction for current iteration
