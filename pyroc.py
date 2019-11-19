@@ -263,7 +263,7 @@ class ROC(object):
 
         return fpr, tpr
 
-    def curve(self, labels=None, fontsize=50, **kwargs):
+    def plot(self, labels=None, fontsize=50, **kwargs):
         # Init figure with axes labels, etc.
         fig, ax = self.__figure(**kwargs)
 
