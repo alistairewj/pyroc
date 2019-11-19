@@ -13,37 +13,40 @@ from scipy.stats import norm, chi2
 
 
 class ROC(object):
-    """
-    Use this class if you are interested in statistically comparing AUROCs.
+    """Class for calculating receiver operator characteristic curves (ROCs).
 
-    Initialize with:
-        target - a vector of 0s and 1s
-        preds - a vector of predictions for the target
-          *or* a list of these vectors if comparing multiple predictions
-          *or* a dictionary of these vectors
+    Also facilitates statistically comparing the area under the ROC for
+    multiple predictors.
+
+    Attributes
+    ----------
+    K : int
+        Calculated number of individual predictors.
+    n_obs : int
+        Calculated number of observations
+    n_pos : int
+        Number of observations with a positive class (== 1)
+    n_neg : int
+        Number of observations with a negative class (== 0)
+    X : np.ndarray
+        Numpy array of predictions for observations in the positive class
+    Y : np.ndarray
+        Numpy array of predictions for observations in the negative class
     """
     def __init__(self, target, preds):
-        if type(preds) is list:
-            # convert preds into a dictionary
-            self.predictors = [x for x in range(len(preds))]
-            self.preds = OrderedDict([[i, x] for i, x in enumerate(preds)])
-        elif 'array' in str(type(preds)):
-            # convert preds into a dictionary
-            self.predictors = [0]
-            self.preds = OrderedDict([[0, preds]])
-        elif type(preds) is dict:
-            # preds is a dict - convert to ordered
-            self.predictors = list(preds.keys())
-            self.predictors.sort()
-            self.preds = OrderedDict([[c, preds[c]] for c in self.predictors])
-        elif type(preds) is not OrderedDict:
-            raise ValueError(
-                'Unrecognized type "%s" for predictions.', str(type(preds))
-            )
-        else:
-            # is already a ordered dict
-            self.preds = preds
-            self.predictors = list(preds.keys())
+        """ROC class for comparing predictors for a common set of targets.
+
+        Parameters
+        ----------
+        target : np.ndarray
+            A length N vector of binary values (0s or 1s).
+        preds : np.ndarray
+            A vector of predictions which correspond to the targets
+            *or* a list of vectors,
+            *or* an NxD matrix,
+            *or* a dictionary of vectors.
+        """
+        self.predictors, self.preds = self._parse_input_preds(preds)
 
         # TODO: validate inputs
         self.target = target
@@ -77,7 +80,54 @@ class ROC(object):
         # calculate S01, S10, S
         self._calculate_covariance()
 
+    @classmethod
+    def _parse_input_preds(cls, preds):
+        """Parse various formats of preds into dictionary/numpy array.
+
+        Parameters
+        ----------
+        preds
+            A vector of predictions which correspond to the targets
+            *or* a list of vectors,
+            *or* an NxD matrix,
+            *or* a dictionary of vectors.         
+
+        Returns
+        -------
+        (np.ndarray, OrderedDict)
+            A list of names for each predictor and a dictionary with
+            the values for each predictor. If no predictor names are
+            provided, then predictor names are monotonically increasing
+            integers.
+
+        """
+        if type(preds) is list:
+            # convert preds into a dictionary
+            predictors = [x for x in range(len(preds))]
+            preds = OrderedDict([[i, x] for i, x in enumerate(preds)])
+        elif 'array' in str(type(preds)):
+            # convert preds into a dictionary
+            predictors = [0]
+            preds = OrderedDict([[0, preds]])
+        elif type(preds) is dict:
+            # preds is a dict - convert to ordered
+            predictors = list(preds.keys())
+            predictors.sort()
+            preds = OrderedDict([[c, preds[c]] for c in predictors])
+        elif type(preds) is not OrderedDict:
+            raise ValueError(
+                'Unrecognized type "%s" for predictions.', str(type(preds))
+            )
+        else:
+            # is already a ordered dict
+            preds = preds
+            predictors = list(preds.keys())
+
+        return predictors, preds
+
     def _calculate_auc(self):
+        """Calculates the area under the ROC and the variances of each predictor.
+        """
         m = self.X.shape[0]
         n = self.Y.shape[0]
 
@@ -110,7 +160,8 @@ class ROC(object):
         return self.auc
 
     def _calculate_covariance(self):
-        # Calculates the covariance for R sets of predictions and outcomes
+        """Calculate the covariance for K sets of predictions and outcomes
+        """
 
         m = self.V10.shape[0]
         n = self.V01.shape[0]
@@ -137,7 +188,8 @@ class ROC(object):
         self.S = (1 / m) * self.S10 + (1 / n) * self.S01
 
     def ci(self, alpha=0.05):
-        # Calculates the confidence intervals for each auroc separetely
+        """Calculates the confidence intervals for each auroc separetely.
+        """
         if self.auc is None:
             self._calculate_auc()
 
@@ -148,9 +200,11 @@ class ROC(object):
         return ci
 
     def compare(self, contrast, alpha=0.05):
-        # Compare predictions given a contrast
-        # If there are two predictions, you can compare as:
-        #   contrast = [1, -1]
+        """Compare predictions given a contrast
+
+        If there are two predictions, you can compare as:
+            roc.compare(contrast=[1, -1], alpha=0.05)
+        """
 
         # Validate alpha
         if (alpha <= 0) | (alpha >= 1):
@@ -215,8 +269,37 @@ class ROC(object):
 
         return np.ndarray.item(thetaP), theta2
 
+    def _roc(self, pred):
+        """Calculate false positive rate and true positive rate for ROC curve.
+
+        Returns
+        -------
+        (fpr, tpr)
+            np.ndarrays containing the false positive rate and the true positive
+            rate, respectively.
+        
+        """
+        # Transform to matrices
+        y_prob = np.array([pred])
+        target = np.array([self.target])
+
+        # Calculate predictions for all thresholds
+        thresholds = np.transpose([np.unique(y_prob)])
+        y_pred = np.greater_equal(y_prob, thresholds)
+
+        # FPR and TPR
+        P = target == 1
+        N = target == 0
+        FP = np.logical_and(y_pred == 1, N)
+        TP = np.logical_and(y_pred == 1, P)
+        fpr = np.sum(FP, axis=1) / np.sum(N)
+        tpr = np.sum(TP, axis=1) / np.sum(P)
+
+        return fpr, tpr
+
     def __figure(self, figsize=(36, 30), **kwargs):
-        # Create figure
+        """Initialize a figure for plotting the ROC curve.
+        """
         fig, ax = plt.subplots(figsize=figsize, **kwargs)
         fig.tight_layout()
 
@@ -244,26 +327,10 @@ class ROC(object):
 
         return (fig, ax)
 
-    def _roc(self, pred):
-        # Transform to matrices
-        y_prob = np.array([pred])
-        target = np.array([self.target])
-
-        # Calculate predictions for all thresholds
-        thresholds = np.transpose([np.unique(y_prob)])
-        y_pred = np.greater_equal(y_prob, thresholds)
-
-        # FPR and TPR
-        P = target == 1
-        N = target == 0
-        FP = np.logical_and(y_pred == 1, N)
-        TP = np.logical_and(y_pred == 1, P)
-        fpr = np.sum(FP, axis=1) / np.sum(N)
-        tpr = np.sum(TP, axis=1) / np.sum(P)
-
-        return fpr, tpr
-
     def plot(self, labels=None, fontsize=50, **kwargs):
+        """Plot the ROC curve.
+        """
+
         # Init figure with axes labels, etc.
         fig, ax = self.__figure(**kwargs)
 
