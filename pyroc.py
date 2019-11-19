@@ -108,13 +108,13 @@ class ROC(object):
             # is already a ordered dict
             pass
         elif type(preds) is list:
-            if len(preds) == len(target):
-                preds = OrderedDict([(0, np.asarray(preds))])
-            elif hasattr(preds[0], '__len__'):
+            if hasattr(preds[0], '__len__'):
                 # convert preds into a dictionary
                 preds = OrderedDict(
                     [[i, np.asarray(p)] for i, p in enumerate(preds)]
                 )
+            elif type(preds[0]) in (float, int):
+                preds = OrderedDict([(0, np.asarray(preds))])
             else:
                 raise TypeError(
                     'unable to parse preds list with element type %s',
