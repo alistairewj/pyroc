@@ -40,7 +40,7 @@ class ROC(object):
         ----------
         target : np.ndarray
             A length N vector of binary values (0s or 1s).
-        preds : np.ndarray
+        preds
             A vector of predictions which correspond to the targets
             *or* a list of vectors,
             *or* an NxD matrix,
@@ -80,8 +80,7 @@ class ROC(object):
         # calculate S01, S10, S
         self._calculate_covariance()
 
-    @classmethod
-    def _parse_input_preds(cls, preds):
+    def _parse_input_preds(self, preds):
         """Parse various formats of preds into dictionary/numpy array.
 
         Parameters
