@@ -114,7 +114,7 @@ class ROC(object):
                 parsed = np.array([preds])
 
             # If needed to transpose matrix
-            if parsed.shape[1] != len(target):
+            if parsed.shape[0] == len(target):
                 parsed = preds.T
 
             # Use column names if it is a DataFrame
