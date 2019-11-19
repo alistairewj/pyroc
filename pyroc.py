@@ -123,9 +123,15 @@ class ROC(object):
         elif type(preds) is pd.DataFrame:
             # preds is a dict - convert to ordered
             preds = OrderedDict(zip(preds.columns, preds.T.values))
-        elif 'array' in str(type(preds)):
-            # convert preds into a dictionary
-            preds = OrderedDict([[0, np.asarray(preds)]])
+        elif type(preds) is np.ndarray:
+            if len(preds.shape) <= 1:
+                # numpy vector
+                preds = OrderedDict([[0, np.asarray(preds)]])
+            else:
+                # numpy matrix
+                preds = OrderedDict(
+                    [[i, preds[:, i]] for i in range(preds.shape[1])]
+                )
         elif type(preds) is dict:
             # preds is a dict - convert to ordered
             names = sorted(preds.keys())
