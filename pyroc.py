@@ -1,8 +1,8 @@
 """
-The pyroc package provides tools for working with ROC curves and the area under the ROC.
+Tools for working with ROC curves and the area under the ROC.
 """
 
-__author__ = "Alistair Johnson <aewj@mit.edu>"
+__author__ = "Alistair Johnson <aewj@mit.edu>, Lucas Bulgarelli"
 __version__ = "0.1.0"
 
 from collections import OrderedDict
