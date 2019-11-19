@@ -8,6 +8,7 @@ __version__ = "0.1.0"
 from collections import OrderedDict
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import norm, chi2
 
@@ -48,8 +49,10 @@ class ROC(object):
         """
         self.predictors, self.preds = self._parse_input_preds(preds)
 
-        # TODO: validate inputs
-        self.target = target
+        self.target = self._parse_input_target(target)
+
+        # TODO: validate that target/predictors work
+        # self._validate_inputs()
 
         # initialize vars
         self.K = len(self.preds)
@@ -89,7 +92,7 @@ class ROC(object):
             A vector of predictions which correspond to the targets
             *or* a list of vectors,
             *or* an NxD matrix,
-            *or* a dictionary of vectors.         
+            *or* a dictionary of vectors.
 
         Returns
         -------
@@ -103,7 +106,11 @@ class ROC(object):
         if type(preds) is list:
             # convert preds into a dictionary
             predictors = [x for x in range(len(preds))]
-            preds = OrderedDict([[i, x] for i, x in enumerate(preds)])
+            preds = OrderedDict(enumerate(preds))
+        elif type(preds) is pd.DataFrame:
+            # preds is a dict - convert to ordered
+            predictors = list(preds.columns)
+            preds = OrderedDict(zip(preds.columns, preds.T.values))
         elif 'array' in str(type(preds)):
             # convert preds into a dictionary
             predictors = [0]
@@ -123,6 +130,33 @@ class ROC(object):
             predictors = list(preds.keys())
 
         return predictors, preds
+
+    def _parse_input_target(self, target):
+        """Parse various formats of targets into a numpy array.
+
+        Parameters
+        ----------
+        target
+            A numpy array of target values (0 and 1) which correspond
+            to the targets.
+
+        Returns
+        -------
+        np.ndarray
+            A list of names for each predictor and a dictionary with
+            the values for each predictor. If no predictor names are
+            provided, then predictor names are monotonically increasing
+            integers.
+
+        """
+        if type(target) is pd.Series:
+            target = target.values
+        elif type(target) is not np.ndarray:
+            raise TypeError(
+                'target should be type np.ndarray, was %s', type(target)
+            )
+
+        return target
 
     def _calculate_auc(self):
         """Calculates the area under the ROC and the variances of each predictor.
