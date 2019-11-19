@@ -26,7 +26,7 @@ setup(
     url='https://github.com/alistairew/pyroc',
 
     # Author details
-    author='Alistair Johnson',
+    author='Alistair Johnson, Lucas Bulgarelli',
     author_email='aewj@mit.edu',
 
     # Choose your license
