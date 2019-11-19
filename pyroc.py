@@ -56,8 +56,8 @@ class ROC(object):
 
         # initialize vars
         self.K = len(self.preds)
-        self.n_obs = len(target)
-        self.n_pos = np.sum(target == 1)
+        self.n_obs = len(self.target)
+        self.n_pos = np.sum(self.target == 1)
         self.n_neg = self.n_obs - self.n_pos
 
         # First parse the predictions into matrices X and Y
@@ -108,9 +108,20 @@ class ROC(object):
 
         """
         if type(preds) is list:
-            # convert preds into a dictionary
-            predictors = [x for x in range(len(preds))]
-            preds = OrderedDict(enumerate(preds))
+            if len(preds) == len(target):
+                predictors = [0]
+                preds = OrderedDict([(0, np.asarray(preds))])
+            elif hasattr(preds[0], '__len__'):
+                # convert preds into a dictionary
+                predictors = [x for x in range(len(preds))]
+                preds = OrderedDict(
+                    [[i, np.asarray(p)] for i, p in enumerate(preds)]
+                )
+            else:
+                raise TypeError(
+                    'unable to parse preds list with element type %s',
+                    type(preds[0])
+                )
         elif type(preds) is pd.DataFrame:
             # preds is a dict - convert to ordered
             predictors = list(preds.columns)
@@ -118,12 +129,12 @@ class ROC(object):
         elif 'array' in str(type(preds)):
             # convert preds into a dictionary
             predictors = [0]
-            preds = OrderedDict([[0, preds]])
+            preds = OrderedDict([[0, np.asarray(preds)]])
         elif type(preds) is dict:
             # preds is a dict - convert to ordered
             predictors = list(preds.keys())
             predictors.sort()
-            preds = OrderedDict([[c, preds[c]] for c in predictors])
+            preds = OrderedDict([[c, np.asarray(preds[c])] for c in predictors])
         elif type(preds) is not OrderedDict:
             raise ValueError(
                 'Unrecognized type "%s" for predictions.', str(type(preds))
@@ -135,6 +146,8 @@ class ROC(object):
 
         if type(target) is pd.Series:
             target = target.values
+        elif type(target) in (list, tuple):
+            target = np.asarray(target)
         elif type(target) is not np.ndarray:
             raise TypeError(
                 'target should be type np.ndarray, was %s', type(target)
