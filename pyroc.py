@@ -47,9 +47,7 @@ class ROC(object):
             *or* an NxD matrix,
             *or* a dictionary of vectors.
         """
-        self.predictors, self.preds, self.target = self._parse_inputs(
-            preds, target
-        )
+        self.preds, self.target = self._parse_inputs(preds, target)
 
         # TODO: validate that target/predictors work
         # self._validate_inputs()
@@ -96,8 +94,7 @@ class ROC(object):
 
         Returns
         -------
-        (np.ndarray, OrderedDict, np.ndarray)
-            - A list of names for each predictor
+        (OrderedDict, np.ndarray)
             - An ordered dictionary with the values for each predictor.
               If no predictor names are provided, then predictor names are
               monotonically increasing integers.
@@ -109,11 +106,9 @@ class ROC(object):
         """
         if type(preds) is list:
             if len(preds) == len(target):
-                predictors = [0]
                 preds = OrderedDict([(0, np.asarray(preds))])
             elif hasattr(preds[0], '__len__'):
                 # convert preds into a dictionary
-                predictors = [x for x in range(len(preds))]
                 preds = OrderedDict(
                     [[i, np.asarray(p)] for i, p in enumerate(preds)]
                 )
@@ -124,25 +119,21 @@ class ROC(object):
                 )
         elif type(preds) is pd.DataFrame:
             # preds is a dict - convert to ordered
-            predictors = list(preds.columns)
             preds = OrderedDict(zip(preds.columns, preds.T.values))
         elif 'array' in str(type(preds)):
             # convert preds into a dictionary
-            predictors = [0]
             preds = OrderedDict([[0, np.asarray(preds)]])
         elif type(preds) is dict:
             # preds is a dict - convert to ordered
-            predictors = list(preds.keys())
-            predictors.sort()
-            preds = OrderedDict([[c, np.asarray(preds[c])] for c in predictors])
+            names = sorted(preds.keys())
+            preds = OrderedDict([[c, np.asarray(preds[c])] for c in names])
         elif type(preds) is not OrderedDict:
             raise ValueError(
                 'Unrecognized type "%s" for predictions.', str(type(preds))
             )
         else:
             # is already a ordered dict
-            preds = preds
-            predictors = list(preds.keys())
+            pass
 
         if type(target) is pd.Series:
             target = target.values
@@ -153,7 +144,7 @@ class ROC(object):
                 'target should be type np.ndarray, was %s', type(target)
             )
 
-        return predictors, preds, target
+        return preds, target
 
     def _calculate_auc(self):
         """Calculates the area under the ROC and the variances of each predictor.
@@ -305,8 +296,8 @@ class ROC(object):
         Returns
         -------
         (fpr, tpr)
-            np.ndarrays containing the false positive rate and the true positive
-            rate, respectively.
+            np.ndarrays containing the false positive rate and the true
+            positive rate, respectively.
         
         """
         # Transform to matrices
@@ -368,9 +359,6 @@ class ROC(object):
         if self.auc is None:
             self._calculate_auc()
 
-        if labels is None:
-            labels = self.predictors
-
         # Get colormap
         viridis = plt.cm.get_cmap("viridis", len(labels))
 
@@ -379,9 +367,9 @@ class ROC(object):
 
         # Set default labels
         if labels is None:
-            labels = self.predictors
+            labels = self.preds.keys()
 
-        for i, label in enumerate(self.predictors):
+        for i, label in enumerate(labels):
             # Get prediction for current iteration
             pred = self.preds[label]
 
