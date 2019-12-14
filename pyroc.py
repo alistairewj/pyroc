@@ -133,6 +133,9 @@ class ROC(object):
         else:
             raise TypeError('Target should be iterable, was %s', type(target))
 
+        # Ensure target is (N, ) length array, not (N, 1)
+        target = target.ravel()
+
         return preds, target
 
     def _calculate_auc(self):
