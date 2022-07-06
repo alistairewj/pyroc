@@ -1,4 +1,4 @@
-name: Generate tables on BigQuery
+name: Run tests on Python
 
 on:
   release:
