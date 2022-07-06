@@ -25,7 +25,7 @@ setup(
     url='https://github.com/alistairewj/pyroc',
 
     # Author details
-    author='Alistair Johnson, Lucas Bulgarelli',
+    author='Alistair Johnson, Lucas Bulgarelli, Tom Pollard',
     author_email='aewj@mit.edu',
 
     # Choose your license
@@ -46,5 +46,5 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['pandas>=0.22.0', 'numpy>=1.12.1', 'scipy>=0.18.1']
+    install_requires=['pandas>=1.0.0', 'numpy>=1.15.2', 'scipy>=1.8.1']
 )
