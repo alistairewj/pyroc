@@ -29,6 +29,8 @@ Use:
     print(auroc)
     print(ci)
 
+A usage.ipynb notebook is provided demonstrating common usage of the package (requires Jupyter: `pip install jupyter`).
+
 Documentation
 -------------
 
