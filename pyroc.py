@@ -290,7 +290,7 @@ class ROC(object):
         (fpr, tpr)
             np.ndarrays containing the false positive rate and the true
             positive rate, respectively.
-        
+
         """
         # Transform to matrices
         y_prob = np.array([pred])
