@@ -215,14 +215,14 @@ class ROC(object):
     def compare(self, contrast=None, alpha=0.05):
         """Compare predictions given a contrast
 
-        If no contrast is provided, and N classifiers are provided (C[0,N]),
-            all classifiers in C[1,N] is compared to C[0]
+        If no contrast is provided, and N classifiers are provided (C[0,N-1]),
+            all classifiers in C[1,N-1] is compared to C[0]
 
         If there are two predictions, you can compare as:
             roc.compare(contrast=[1, -1], alpha=0.05)
         """
-        # If no contrast is provided, and N classifiers are provided (C[0,N])
-        # compare classifiers C[1,N] to C[0]
+        # If no contrast is provided, and N classifiers are provided (C[0,N-1])
+        # compare classifiers C[1,N-1] to C[0]
         if contrast is None:
             contrast = -np.identity(self.K - 1)
             contrast = np.insert(contrast, 0, np.ones(self.K - 1), axis=1)
