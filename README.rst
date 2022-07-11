@@ -1,6 +1,9 @@
 pyroc
 =========
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.6819206.svg
+   :target: https://doi.org/10.5281/zenodo.6819206
+
 pyroc is a package for analyzing receiver operator characteristic (ROC) curves.
 It includes the ability to statistically compare the area under the ROC (AUROC) for two or more classifiers.
 
@@ -46,3 +49,26 @@ To install the package with pip, run::
 To install this package with conda, run::
     
     conda install -c conda-forge pyroc
+
+Acknowledgement
+---------------
+
+Please use the latest DOI on `Zenodo`_. Example BibTeX:
+
+.. code-block:: latex
+
+    @software{pyroc,
+      author       = {Alistair Johnson and
+                      Lucas Bulgarelli and
+                      Tom Pollard},
+      title        = {alistairewj/pyroc: pyroc v0.2.0},
+      month        = jul,
+      year         = 2022,
+      publisher    = {Zenodo},
+      version      = {v0.2.0},
+      doi          = {10.5281/zenodo.6819206},
+      url          = {https://doi.org/10.5281/zenodo.6819206}
+    }
+
+
+.. _Zenodo: https://doi.org/10.5281/zenodo.6819205
